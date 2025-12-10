@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Flutter
@@ -18,10 +18,17 @@ jobs:
         with:
           channel: stable
 
-      - name: Flutter clean & pub get
+      # هذا ينشئ اختصار حتى يصير /Applications/flutter موجود على الـ runner
+      - name: Create Flutter symlink for Xcode
         run: |
-          flutter clean
-          flutter pub get
+          echo "FLUTTER_ROOT=$FLUTTER_ROOT"
+          sudo mkdir -p /Applications
+          if [ ! -d "/Applications/flutter" ]; then
+            sudo ln -s "$FLUTTER_ROOT" /Applications/flutter
+          fi
+
+      - name: Flutter pub get
+        run: flutter pub get
 
       - name: Prepare CocoaPods
         run: |
