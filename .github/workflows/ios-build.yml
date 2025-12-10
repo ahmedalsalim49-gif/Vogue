@@ -1,70 +1,56 @@
-name: iOS Flutter Build
+name: Build iOS IPA
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ "main" ]
 
 jobs:
   build-ios:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.22.0'
 
-      - name: Flutter pub get
+      - name: Install dependencies
         run: flutter pub get
 
-      # نبني iOS بدون توقيع
-      - name: Build iOS (no codesign)
-        run: flutter build ios --release --no-codesign
-
-      # نثبت الشهادة (ملف .p12) من الـ Secrets
-      - name: Install signing certificate
-        uses: apple-actions/import-certificate@v1
+      # -----------------------------
+      #  IMPORT CERTIFICATE (.p12)
+      # -----------------------------
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v1
         with:
-          certificate: ${{ secrets.IOS_CERTIFICATE_P12 }}
-          p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.CERT_P12 }}
+          p12-password: ${{ secrets.CERT_PASSWORD }}
 
-      # نثبت الـ provisioning profile من الـ Secrets
-      - name: Install provisioning profile
-        uses: apple-actions/import-provisioning-profile@v1
+      # -----------------------------
+      #  IMPORT PROVISIONING PROFILE
+      # -----------------------------
+      - name: Install provisioning profiles
+        uses: apple-actions/download-provisioning-profiles@v1
         with:
-          profile: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          provisioning-profile-base64: ${{ secrets.PROVISION_PROFILE }}
 
-      # نعمل Archive مع توقيع يدوي
-      - name: Archive with xcodebuild
+      # -----------------------------
+      #  BUILD IPA
+      # -----------------------------
+      - name: Build iOS IPA
         run: |
-          cd ios
-          xcodebuild \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath $PWD/build/Runner.xcarchive \
-            DEVELOPMENT_TEAM=2C4H3FSMFS \
-            PROVISIONING_PROFILE_SPECIFIER="VogueBarber_AppStore_Profile" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            clean archive
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/ExportOptions.plist
 
-      # نطلع ملف IPA جاهز للرفع
-      - name: Export IPA
-        run: |
-          cd ios
-          xcodebuild -exportArchive \
-            -archivePath $PWD/build/Runner.xcarchive \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath $PWD/build/ipa
-
-      # نرفع الـ IPA كـ artifact
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
+      # -----------------------------
+      #  Upload IPA
+      # -----------------------------
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: Vogue-IPA
-          path: ios/build/ipa/*.ipa
+          name: vogue-barber-ipa
+          path: build/ios/ipa/*.ipa
