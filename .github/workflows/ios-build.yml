@@ -50,7 +50,7 @@ jobs:
       #  Upload IPA
       # -----------------------------
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vogue-barber-ipa
           path: build/ios/ipa/*.ipa
