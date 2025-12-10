@@ -18,13 +18,17 @@ jobs:
         with:
           channel: stable
 
-      - name: Flutter pub get
-        run: flutter pub get
+      - name: Flutter clean & pub get
+        run: |
+          flutter clean
+          flutter pub get
 
-      - name: Install CocoaPods
+      - name: Prepare CocoaPods
         run: |
           cd ios
-          pod install --repo-update
+          rm -rf Pods Podfile.lock
+          pod repo update
+          pod install
           cd ..
 
       - name: Build iOS (no codesign)
