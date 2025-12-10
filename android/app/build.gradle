@@ -1,0 +1,46 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'dev.flutter.flutter-gradle-plugin'
+
+android {
+    namespace "com.tiagroup.voguebarber"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.tiagroup.voguebarber"
+        minSdk 21
+        targetSdk 35
+        versionCode 5
+        versionName "1.0.4"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("vogue_keystore.jks")
+            storePassword "Vogue2025!"
+            keyAlias "vogue_key"
+            keyPassword "Vogue2025!"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+flutter {
+    source "../.."
+}
