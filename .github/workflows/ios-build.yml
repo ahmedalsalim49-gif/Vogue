@@ -1,56 +1,37 @@
-name: Build iOS IPA
+name: iOS Flutter Build
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   build-ios:
     runs-on: macos-latest
 
     steps:
+      # 1) اسحب الكود من الريبو
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # 2) حضّر Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: 'stable'
+          channel: 'stable'
 
-      - name: Install dependencies
+      # 3) flutter pub get
+      - name: Flutter pub get
         run: flutter pub get
 
-      # -----------------------------
-      #  IMPORT CERTIFICATE (.p12)
-      # -----------------------------
-      - name: Import signing certificate
-        uses: apple-actions/import-codesign-certs@v1
-        with:
-          p12-file-base64: ${{ secrets.CERT_P12 }}
-          p12-password: ${{ secrets.CERT_PASSWORD }}
+      # 4) بِلد iOS بدون توقيع (حتى نضمن البيلد يشتغل أولاً)
+      - name: Build iOS app (no codesign)
+        run: flutter build ios --release --no-codesign
 
-      # -----------------------------
-      #  IMPORT PROVISIONING PROFILE
-      # -----------------------------
-      - name: Install provisioning profiles
-        uses: apple-actions/download-provisioning-profiles@v1
-        with:
-          provisioning-profile-base64: ${{ secrets.PROVISION_PROFILE }}
-
-      # -----------------------------
-      #  BUILD IPA
-      # -----------------------------
-      - name: Build iOS IPA
-        run: |
-          flutter build ipa \
-            --release \
-            --export-options-plist=ios/ExportOptions.plist
-
-      # -----------------------------
-      #  Upload IPA
-      # -----------------------------
-      - name: Upload IPA Artifact
+      # 5) رفع ناتج البيلد كـ artifact
+      - name: Upload iOS build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vogue-barber-ipa
-          path: build/ios/ipa/*.ipa
+          name: ios-build
+          path: build/ios/iphoneos/
